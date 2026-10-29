@@ -1,0 +1,296 @@
+{
+  "info": {
+    "_postman_id": "c1f7b889-8d8a-4993-9c87-8df7d9d0e2e1",
+    "name": "Dibimbing - E-Commerce Product Catalog REST API",
+    "description": "Postman Collection resmi untuk pengujian lengkap REST API E-Commerce Catalog Service (Dibimbing Web Development Bootcamp).\nMendukung seluruh metode: GET, POST (API PUSH), PUT, PATCH, dan DELETE lengkap dengan uji validasi error 400 dan 404.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. GET - List Semua Produk",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        },
+        "description": "Mengambil seluruh daftar produk dari katalog e-commerce."
+      },
+      "response": []
+    },
+    {
+      "name": "2. GET - List Produk (Filter & Search & Sort)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products?search=wireless&category=Elektronik&sort=price_asc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "wireless",
+              "description": "Pencarian kata kunci"
+            },
+            {
+              "key": "category",
+              "value": "Elektronik",
+              "description": "Filter kategori"
+            },
+            {
+              "key": "sort",
+              "value": "price_asc",
+              "description": "Urutkan termurah ke termahal"
+            }
+          ]
+        },
+        "description": "Mengambil daftar produk dengan filter pencarian kata kunci, kategori, dan sorting."
+      },
+      "response": []
+    },
+    {
+      "name": "3. GET - Detail Produk by ID (200 OK)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products",
+            "1"
+          ]
+        },
+        "description": "Mengambil informasi detail produk dengan ID 1."
+      },
+      "response": []
+    },
+    {
+      "name": "4. GET - Detail Produk by ID (404 Not Found)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products/999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products",
+            "999"
+          ]
+        },
+        "description": "Menguji respon ketika ID produk tidak ada di katalog (ekspektasi status 404)."
+      },
+      "response": []
+    },
+    {
+      "name": "5. POST - Tambah Produk Baru (201 Created - API PUSH)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Keyboard Mechanical RGB Hot-Swappable\",\n  \"category\": \"Elektronik\",\n  \"price\": 650000,\n  \"image\": \"https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80\",\n  \"variants\": {\n    \"colorOrSize\": [\"Red Switch\", \"Blue Switch\", \"Brown Switch\"],\n    \"quantity\": 20\n  },\n  \"description\": \"Keyboard mechanical layout 75% dengan konektivitas Bluetooth 5.0, RGB lighting per-key, dan baterai 4000mAh.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        },
+        "description": "Menambahkan produk baru ke katalog in-memory. ID otomatis di-generate oleh sistem."
+      },
+      "response": []
+    },
+    {
+      "name": "6. POST - Tambah Produk Validasi Gagal (400 Bad Request)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\",\n  \"price\": -50000,\n  \"description\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        },
+        "description": "Menguji middleware validasi ketika data nama kosong, harga negatif, dan varian tidak disertakan."
+      },
+      "response": []
+    },
+    {
+      "name": "7. PUT - Ganti Seluruh Data Produk (200 OK)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Headphone Wireless Noise Cancelling Pro Gen 2\",\n  \"category\": \"Elektronik\",\n  \"price\": 890000,\n  \"image\": \"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80\",\n  \"variants\": {\n    \"colorOrSize\": [\"Hitam Doff\", \"Silver Titanium\", \"Midnight Blue\"],\n    \"quantity\": 35\n  },\n  \"description\": \"Generasi kedua headphone ANC dengan peningkatan driver audio 45mm dan baterai tahan hingga 40 jam.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products",
+            "1"
+          ]
+        },
+        "description": "Memperbarui seluruh data produk dengan ID 1 menggunakan metode PUT."
+      },
+      "response": []
+    },
+    {
+      "name": "8. PUT - Ganti Produk Tidak Ditemukan (404 Not Found)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Produk Fiktif\",\n  \"category\": \"General\",\n  \"price\": 100000,\n  \"image\": \"https://example.com/foto.jpg\",\n  \"variants\": {\n    \"colorOrSize\": [\"Default\"],\n    \"quantity\": 1\n  },\n  \"description\": \"Testing ID 999\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products/999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products",
+            "999"
+          ]
+        },
+        "description": "Menguji operasi PUT untuk produk yang tidak terdaftar."
+      },
+      "response": []
+    },
+    {
+      "name": "9. PATCH - Ubah Sebagian Field Produk (200 OK)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"price\": 320000,\n  \"variants\": {\n    \"quantity\": 18\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products/2",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products",
+            "2"
+          ]
+        },
+        "description": "Mengubah hanya harga dan kuantitas stok tanpa mengubah field nama atau foto."
+      },
+      "response": []
+    },
+    {
+      "name": "10. DELETE - Hapus Produk by ID (200 OK)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products",
+            "1"
+          ]
+        },
+        "description": "Menghapus produk ID 1 dari katalog in-memory."
+      },
+      "response": []
+    },
+    {
+      "name": "11. DELETE - Hapus Produk Tidak Ada (404 Not Found)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products/999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products",
+            "999"
+          ]
+        },
+        "description": "Menguji respon 404 ketika menghapus produk dengan ID yang tidak ada."
+      },
+      "response": []
+    }
+  ]
+}
+

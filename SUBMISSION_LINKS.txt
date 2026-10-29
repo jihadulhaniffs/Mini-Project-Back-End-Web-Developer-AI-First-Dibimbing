@@ -1,0 +1,25 @@
+================================================================================
+PENGUMPULAN MINI PROJECT BACK-END: WEB DEVELOPER AI-FIRST
+DIBIMBING BOOTCAMP - BACK END WEB DEVELOPMENT (BE-19)
+================================================================================
+Nama Student : Jihadul Hanif
+Topik        : Modern Back-End Development with AI (E-Commerce Catalog Service)
+Tanggal      : 29 Oktober 2026
+--------------------------------------------------------------------------------
+
+1. Link GitHub Repository :
+   [TEMPELKAN LINK REPOSITORI GITHUB DI SINI]
+   Contoh: https://github.com/username/ecommerce-product-catalog-api
+
+2. Link Postingan LinkedIn:
+   [TEMPELKAN LINK POSTINGAN LINKEDIN DI SINI]
+   Contoh: https://www.linkedin.com/posts/username_...
+
+================================================================================
+Catatan Tambahan:
+- Back End: Node.js & Express.js (Modular MVC, RESTful API CRUD)
+- API Documentation: Swagger UI (/api-docs) & Postman Collection v2.1
+- Database Reference: Relational SQL Schema (database/schema.sql)
+- Frontend Integration: Interactive Product Detail Pages (public/)
+================================================================================
+

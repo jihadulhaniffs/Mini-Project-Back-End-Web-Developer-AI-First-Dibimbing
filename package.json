@@ -1,0 +1,26 @@
+{
+  "name": "ecommerce-product-catalog-api",
+  "version": "1.0.0",
+  "description": "Mini Project Web Development - Modern Back-End Development with AI (E-Commerce Product Catalog REST API)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test-api.js"
+  },
+  "keywords": [
+    "dibimbing",
+    "express",
+    "rest-api",
+    "crud",
+    "ecommerce",
+    "swagger",
+    "postman"
+  ],
+  "author": "Jihadul Hanif",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "swagger-ui-express": "^5.0.1"
+  }
+}
