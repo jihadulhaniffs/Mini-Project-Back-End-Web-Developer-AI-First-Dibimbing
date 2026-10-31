@@ -19,25 +19,51 @@ Layanan ini mengelola data katalog produk secara *in-memory* dengan operasi **CR
 
 ---
 
+## 💾 Karakteristik Penyimpanan Data (In-Memory Persistence)
+
+Layanan ini menggunakan penyimpanan data *in-memory* (sesuai arahan practical modul). 
+- Seluruh perubahan data (penambahan produk melalui POST, pembaruan melalui PUT/PATCH, dan penghapusan melalui DELETE) tersimpan di memori runtime selama server aktif.
+- Apabila server dihentikan atau dimulai ulang (*restart*), data katalog akan otomatis kembali ke kondisi awal (*seed data* 5 produk).
+- Untuk kebutuhan pengembangan persisten di masa depan, skema relasional SQL telah disediakan di berkas `database/schema.sql`.
+
+---
+
+## 🔄 Perbedaan Endpoint PUT dan PATCH
+
+Layanan ini mengimplementasikan pembaruan data secara semantik sesuai standar RESTful API:
+1. **PUT (`/api/products/:id`) — Penggantian Penuh (*Full Replacement*):**  
+   - Klien wajib mengirimkan seluruh field produk (`name`, `category`, `price`, `description`, `image`, dan `variants`).  
+   - Apabila ada field wajib yang tidak disertakan (misalnya `category`), server akan menolak request dengan status `400 Bad Request`.  
+   - Seluruh nilai lama pada produk akan ditimpa dengan nilai baru yang dikirimkan.
+2. **PATCH (`/api/products/:id`) — Pembaruan Parsial (*Partial Update*):**  
+   - Klien cukup mengirimkan field yang ingin diubah saja (misalnya hanya `price` atau `variants.quantity`).  
+   - Field lain yang tidak dikirimkan dalam request body akan tetap mempertahankan nilai sebelumnya.
+
+---
+
 ## ✨ Fitur Utama (Key Features)
 
-1. **Operasi CRUD Lengkap:**
-   - **GET (Membaca Data):** Menampilkan seluruh katalog produk dengan dukungan pencarian kata kunci (*search*), filter kategori, rentang harga (*minPrice* & *maxPrice*), dan pengurutan (*sorting*), serta endpoint detail produk berdasarkan ID.
-   - **POST (Menambah Data):** Menambahkan produk baru ke katalog dengan ID berurutan otomatis (*auto-generated ID*) dan validasi field wajib.
-   - **PUT (Memperbarui Seluruh Data):** Mengganti seluruh data produk yang ada (*Full Replacement*) dengan validasi kelengkapan field.
-   - **PATCH (Memperbarui Parsial):** Mengubah sebagian field data produk tertentu secara fleksibel.
-   - **DELETE (Menghapus Data):** Menghapus produk dari katalog berdasarkan parameter ID.
+1. **Operasi CRUD Lengkap (6 Endpoint RESTful):**
+   - **GET `/api/products`:** Menampilkan daftar katalog produk dengan dukungan **Pagination** (`page`, `limit`), pencarian kata kunci (`search`), filter kategori (`category`), rentang harga (`minPrice` & `maxPrice`), dan pengurutan (`sort`).
+   - **GET `/api/products/:id`:** Menampilkan detail satu produk berdasarkan parameter ID.
+   - **POST `/api/products`:** Menambahkan produk baru ke katalog dengan ID berurutan otomatis (*auto-generated integer ID*) dan validasi field wajib.
+   - **PUT `/api/products/:id`:** Mengganti seluruh data produk yang ada (*Full Replacement*).
+   - **PATCH `/api/products/:id`:** Memperbarui sebagian field data produk tertentu (*Partial Update*).
+   - **DELETE `/api/products/:id`:** Menghapus produk dari katalog berdasarkan parameter ID.
 
 2. **Arsitektur Modular & Bersih:**
-   - Pemisahan tanggung jawab yang jelas antara lapisan rute (*routes*), pengontrol (*controllers*), model data (*models*), dan *middlewares*.
+   - Pemisahan tanggung jawab yang jelas antar lapisan: rute (`routes`), pengontrol (`controllers`), model data (`models`), utilitas (`utils`), dan middleware (`middlewares`).
+   - Response diformat secara seragam menggunakan kelas pembantu `ApiResponse`.
 
-3. **Validasi & Penanganan Error Terpusat:**
-   - Pengecekan tipe data, harga non-negatif, kelengkapan varian produk, serta proteksi terhadap format JSON yang rusak (*malformed JSON*).
-   - Penggunaan status code HTTP standar industri (`200 OK`, `201 Created`, `400 Bad Request`, `404 Not Found`, `500 Internal Server Error`).
+3. **Validasi Ketat & Keamanan Error Handling:**
+   - Validasi format URL gambar (`http://` atau `https://`).
+   - Validasi varian produk: memastikan `colorOrSize` memiliki nilai valid (menolak array kosong atau teks kosong) dan `quantity` berupa bilangan bulat positif.
+   - Handler 404 yang aman tanpa membocorkan daftar endpoint internal ke publik.
+   - Penanganan error 500 terpusat tanpa mengirimkan pesan error internal mentah ke klien.
 
 4. **Dokumentasi API Ganda:**
-   - Antarmuka interaktif **Swagger UI** langsung di browser.
-   - File koleksi **Postman v2.1** siap pakai untuk pengujian otomatis maupun manual.
+   - Antarmuka interaktif **Swagger UI** langsung di browser via `/api-docs`.
+   - File koleksi **Postman v2.1** lengkap dengan contoh response tersimpan (*saved examples*) dan script pengujian otomatis (*test assertions*).
 
 ---
 
@@ -47,16 +73,18 @@ Layanan ini mengelola data katalog produk secara *in-memory* dengan operasi **CR
 Mini Project WEB AI/
 ├── src/
 │   ├── data/
-│   │   └── products.js         # Seed data awal katalog produk (hardcoded 5 produk)
+│   │   └── products.js         # Seed data awal katalog produk (5 produk)
 │   ├── models/
-│   │   └── productModel.js     # Logika abstraksi data in-memory & query filter
+│   │   └── productModel.js     # Logika data in-memory, pagination & query filter
 │   ├── controllers/
-│   │   └── productController.js# Pengontrol HTTP request & penentuan status code
+│   │   └── productController.js# Pengontrol HTTP request & response
 │   ├── middlewares/
 │   │   ├── validation.js       # Validasi input request body (POST, PUT, PATCH)
 │   │   └── errorHandler.js     # Middleware terpusat untuk 404 & 500 error
 │   ├── routes/
 │   │   └── productRoutes.js    # Definisi rute Express /api/products
+│   ├── utils/
+│   │   └── apiResponse.js      # Kelas standarisasi format response JSON
 │   ├── docs/
 │   │   └── swaggerSpec.js      # Spesifikasi OpenAPI 3.0.0
 │   └── app.js                  # Konfigurasi Express, CORS, Swagger UI, & routing
@@ -64,7 +92,7 @@ Mini Project WEB AI/
 │   └── schema.sql              # Referensi skema SQL relasional (DDL & DML seed)
 ├── postman/
 │   └── Dibimbing_Product_Catalog_API.postman_collection.json # Koleksi Postman v2.1
-├── test-api.js                 # Skrip pengujian otomatis (13 uji fungsional)
+├── test-api.js                 # Skrip pengujian otomatis menyeluruh (19 uji fungsional)
 ├── server.js                   # Entry point aplikasi
 ├── package.json                # Konfigurasi dependensi dan skrip proyek
 ├── .gitignore                  # Berkas pengabaian git
@@ -78,7 +106,7 @@ Mini Project WEB AI/
 Pastikan **Node.js** (versi 16 atau lebih baru) telah terpasang.
 
 1. Buka terminal pada direktori proyek.
-2. Pasang dependensi yang diperlukan:
+2. Pasang dependensi:
    ```bash
    npm install
    ```
@@ -94,20 +122,20 @@ npm start
 Server akan aktif pada: **`http://localhost:3000`**
 
 Daftar akses cepat:
-- **Informasi Servis:** `http://localhost:3000/`
 - **Swagger UI (Dokumentasi Interaktif):** `http://localhost:3000/api-docs`
 - **Raw OpenAPI Spec:** `http://localhost:3000/api-docs.json`
+- **Health Check:** `http://localhost:3000/health`
 - **Endpoint Produk:** `http://localhost:3000/api/products`
 
 ---
 
 ## 🧪 Pengujian Otomatis
 
-Proyek ini dilengkapi rangkaian pengujian fungsional otomatis untuk memverifikasi setiap endpoint:
+Proyek ini dilengkapi rangkaian pengujian fungsional otomatis untuk memverifikasi setiap endpoint dan skenario validasi:
 ```bash
 npm test
 ```
-*Hasil pengujian akan memverifikasi 13 skenario tes sekaligus dengan hasil 100% Pass.*
+*Hasil pengujian akan memverifikasi 19 skenario tes secara otomatis (100% Pass).*
 
 ---
 
@@ -115,18 +143,18 @@ npm test
 
 | Method | Endpoint | Deskripsi | Status Code Sukses | Status Code Gagal |
 | :---: | :--- | :--- | :---: | :---: |
-| **GET** | `/api/products` | Mengambil seluruh daftar produk (dukung query `search`, `category`, `minPrice`, `maxPrice`, `sort`) | `200 OK` | `400 Bad Request` |
+| **GET** | `/api/products` | Mengambil daftar produk (dukung query `page`, `limit`, `search`, `category`, `minPrice`, `maxPrice`, `sort`) | `200 OK` | `400 Bad Request` |
 | **GET** | `/api/products/:id` | Mengambil detail satu produk berdasarkan ID | `200 OK` | `404 Not Found` |
-| **POST** | `/api/products` | Menambahkan produk baru dengan validasi data | `201 Created` | `400 Bad Request` |
-| **PUT** | `/api/products/:id` | Mengganti seluruh data produk yang ada | `200 OK` | `400` / `404` |
-| **PATCH** | `/api/products/:id` | Mengubah sebagian field data produk | `200 OK` | `400` / `404` |
+| **POST** | `/api/products` | Menambahkan produk baru (semua field wajib diisi) | `201 Created` | `400 Bad Request` |
+| **PUT** | `/api/products/:id` | Mengganti seluruh data produk yang ada (*Full Replacement*) | `200 OK` | `400` / `404` |
+| **PATCH** | `/api/products/:id` | Mengubah sebagian field data produk (*Partial Update*) | `200 OK` | `400` / `404` |
 | **DELETE** | `/api/products/:id` | Menghapus produk dari katalog berdasarkan ID | `200 OK` | `404 Not Found` |
 
 ---
 
 ## 📝 Format Data & Contoh Request / Response
 
-Struktur objek data produk:
+### Struktur Objek Produk:
 ```json
 {
   "id": 1,
@@ -134,6 +162,9 @@ Struktur objek data produk:
   "category": "Elektronik",
   "price": 750000,
   "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+  "images": [
+    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80"
+  ],
   "variants": {
     "colorOrSize": ["Hitam", "Silver", "Midnight Blue"],
     "quantity": 15
@@ -142,40 +173,42 @@ Struktur objek data produk:
 }
 ```
 
-### Contoh POST `/api/products` (Tambah Produk)
-**Request Body:**
-```json
-{
-  "name": "Keyboard Mechanical RGB Hot-Swappable",
-  "category": "Elektronik",
-  "price": 650000,
-  "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
-  "variants": {
-    "colorOrSize": ["Red Switch", "Blue Switch", "Brown Switch"],
-    "quantity": 20
-  },
-  "description": "Keyboard mechanical 75% dengan konektivitas Bluetooth 5.0 dan baterai 4000mAh."
-}
-```
-
-**Response `201 Created`:**
+### Contoh Response GET `/api/products?page=1&limit=10`:
 ```json
 {
   "success": true,
-  "statusCode": 201,
-  "message": "Produk baru berhasil ditambahkan ke katalog.",
-  "data": {
-    "id": 6,
-    "name": "Keyboard Mechanical RGB Hot-Swappable",
-    "category": "Elektronik",
-    "price": 650000,
-    "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
-    "variants": {
-      "colorOrSize": ["Red Switch", "Blue Switch", "Brown Switch"],
-      "quantity": 20
-    },
-    "description": "Keyboard mechanical 75% dengan konektivitas Bluetooth 5.0 dan baterai 4000mAh."
-  }
+  "statusCode": 200,
+  "message": "Daftar produk berhasil diambil.",
+  "pagination": {
+    "totalItems": 5,
+    "currentPage": 1,
+    "totalPages": 1,
+    "limit": 10
+  },
+  "filtersApplied": {
+    "search": null,
+    "category": null,
+    "minPrice": null,
+    "maxPrice": null,
+    "sort": null
+  },
+  "data": [
+    {
+      "id": 1,
+      "name": "Headphone Wireless Noise Cancelling Pro",
+      "category": "Elektronik",
+      "price": 750000,
+      "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+      "images": [
+        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80"
+      ],
+      "variants": {
+        "colorOrSize": ["Hitam", "Silver", "Midnight Blue"],
+        "quantity": 15
+      },
+      "description": "Headphone over-ear nirkabel dengan ANC dan baterai 30 jam."
+    }
+  ]
 }
 ```
 
@@ -187,13 +220,13 @@ Struktur objek data produk:
 2. Klik tombol **Import** pada menu navigasi.
 3. Pilih berkas:  
    `postman/Dibimbing_Product_Catalog_API.postman_collection.json`
-4. Koleksi **Dibimbing - E-Commerce Product Catalog REST API** akan muncul di sidebar dengan 11 request pengujian yang siap dieksekusi ke `http://localhost:3000`.
+4. Koleksi akan memuat 6 endpoint utama lengkap dengan script pengujian otomatis (*Tests*) dan contoh response sukses maupun error (*Saved Examples*).
 
 ---
 
 ## 🌐 Panduan Pengujian via Swagger UI
 
 1. Jalankan server dengan perintah `npm start`.
-2. Buka browser dan arahkan ke alamat:  
+2. Buka browser dan kunjungi alamat:  
    `http://localhost:3000/api-docs`
-3. Pengujian dapat dilakukan langsung melalui tombol **"Try it out"** pada masing-masing endpoint.
+3. Seluruh skema data, parameter pagination, filter, serta operasi CRUD dapat diuji secara interaktif langsung melalui tombol **"Try it out"**.

@@ -1,14 +1,14 @@
 /**
  * src/models/productModel.js
- * Model In-Memory untuk mengelola data produk selama runtime.
- * Mengenkapsulasi operasi CRUD: Create, Read, Update, Delete.
+ * Model in-memory untuk mengelola data katalog produk.
+ * Catatan: Perubahan data bersifat in-memory dan akan kembali ke seed data awal saat server dimulai ulang.
  */
 
 'use strict';
 
 const initialProducts = require('../data/products');
 
-// Salinan mendalam (deep copy) dari seed data agar data master tidak terubah secara langsung
+// Salinan mendalam (deep copy) dari seed data
 let products = initialProducts.map(p => ({
   ...p,
   images: Array.isArray(p.images) ? [...p.images] : [p.image],
@@ -18,10 +18,6 @@ let products = initialProducts.map(p => ({
   }
 }));
 
-/**
- * Helper: Menghasilkan ID integer baru yang unik
- * @returns {number} ID baru
- */
 function generateNextId() {
   const maxId = products.reduce((max, item) => {
     const num = Number(item.id);
@@ -31,16 +27,6 @@ function generateNextId() {
 }
 
 const ProductModel = {
-  /**
-   * Mengambil semua produk dengan filter opsional
-   * @param {Object} filters
-   * @param {string} [filters.search] - Pencarian di nama & deskripsi
-   * @param {string} [filters.category] - Filter kategori persis
-   * @param {number} [filters.minPrice] - Batas minimum harga
-   * @param {number} [filters.maxPrice] - Batas maksimum harga
-   * @param {string} [filters.sort] - 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc'
-   * @returns {Array} Daftar produk yang cocok
-   */
   findAll(filters = {}) {
     let result = products.map(p => ({
       ...p,
@@ -51,7 +37,6 @@ const ProductModel = {
       }
     }));
 
-    // Filter berdasarkan kata kunci pencarian (nama atau deskripsi)
     if (filters.search && typeof filters.search === 'string') {
       const keyword = filters.search.trim().toLowerCase();
       result = result.filter(p =>
@@ -60,23 +45,19 @@ const ProductModel = {
       );
     }
 
-    // Filter berdasarkan kategori
     if (filters.category && typeof filters.category === 'string') {
       const cat = filters.category.trim().toLowerCase();
       result = result.filter(p => p.category && p.category.toLowerCase() === cat);
     }
 
-    // Filter batas harga minimum
     if (typeof filters.minPrice === 'number' && !isNaN(filters.minPrice)) {
       result = result.filter(p => p.price >= filters.minPrice);
     }
 
-    // Filter batas harga maksimum
     if (typeof filters.maxPrice === 'number' && !isNaN(filters.maxPrice)) {
       result = result.filter(p => p.price <= filters.maxPrice);
     }
 
-    // Pengurutan (Sorting)
     if (filters.sort) {
       switch (filters.sort) {
         case 'price_asc':
@@ -96,14 +77,16 @@ const ProductModel = {
       }
     }
 
-    return result;
+    const totalItems = result.length;
+
+    if (filters.page && filters.limit) {
+      const startIndex = (filters.page - 1) * filters.limit;
+      result = result.slice(startIndex, startIndex + filters.limit);
+    }
+
+    return { items: result, totalItems };
   },
 
-  /**
-   * Mengambil satu produk berdasarkan ID
-   * @param {number|string} id
-   * @returns {Object|null} Objek produk atau null jika tidak ada
-   */
   findById(id) {
     const product = products.find(p => String(p.id) === String(id));
     if (!product) return null;
@@ -117,68 +100,59 @@ const ProductModel = {
     };
   },
 
-  /**
-   * Menambahkan produk baru ke dalam katalog
-   * @param {Object} data - Payload produk
-   * @returns {Object} Produk baru yang dibuat beserta ID otomatis
-   */
   create(data) {
     const newId = generateNextId();
-    const primaryImage = data.image ? String(data.image).trim() : 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=800&q=80';
+    const primaryImage = String(data.image).trim();
     const imageList = Array.isArray(data.images) && data.images.length > 0
       ? data.images.map(img => String(img).trim())
       : [primaryImage];
 
+    const variantColors = Array.isArray(data.variants.colorOrSize)
+      ? data.variants.colorOrSize.map(v => String(v).trim())
+      : [String(data.variants.colorOrSize).trim()];
+
     const newProduct = {
       id: newId,
       name: String(data.name).trim(),
-      category: data.category ? String(data.category).trim() : 'General',
+      category: String(data.category).trim(),
       price: Number(data.price),
       image: primaryImage,
       images: imageList,
       variants: {
-        colorOrSize: Array.isArray(data.variants?.colorOrSize) && data.variants.colorOrSize.length > 0
-          ? data.variants.colorOrSize.map(v => String(v).trim())
-          : ['Standard'],
-        quantity: typeof data.variants?.quantity === 'number' && data.variants.quantity >= 0
-          ? Number(data.variants.quantity)
-          : 0
+        colorOrSize: variantColors,
+        quantity: Number(data.variants.quantity)
       },
-      description: data.description ? String(data.description).trim() : ''
+      description: String(data.description).trim()
     };
 
     products.push(newProduct);
     return newProduct;
   },
 
-  /**
-   * Mengganti seluruh data produk (Full Update - PUT)
-   * @param {number|string} id
-   * @param {Object} data
-   * @returns {Object|null} Data produk baru atau null jika ID tidak ditemukan
-   */
   update(id, data) {
     const index = products.findIndex(p => String(p.id) === String(id));
     if (index === -1) return null;
 
     const existingId = products[index].id;
-    const primaryImage = data.image ? String(data.image).trim() : products[index].image;
+    const primaryImage = String(data.image).trim();
     const imageList = Array.isArray(data.images) && data.images.length > 0
       ? data.images.map(img => String(img).trim())
       : [primaryImage];
 
+    const variantColors = Array.isArray(data.variants.colorOrSize)
+      ? data.variants.colorOrSize.map(v => String(v).trim())
+      : [String(data.variants.colorOrSize).trim()];
+
     const updatedProduct = {
       id: existingId,
       name: String(data.name).trim(),
-      category: data.category ? String(data.category).trim() : products[index].category || 'General',
+      category: String(data.category).trim(),
       price: Number(data.price),
       image: primaryImage,
       images: imageList,
       variants: {
-        colorOrSize: Array.isArray(data.variants?.colorOrSize)
-          ? data.variants.colorOrSize.map(v => String(v).trim())
-          : [String(data.variants?.colorOrSize || 'Standard')],
-        quantity: Number(data.variants?.quantity) || 0
+        colorOrSize: variantColors,
+        quantity: Number(data.variants.quantity)
       },
       description: String(data.description).trim()
     };
@@ -187,12 +161,6 @@ const ProductModel = {
     return updatedProduct;
   },
 
-  /**
-   * Mengubah sebagian field produk (Partial Update - PATCH)
-   * @param {number|string} id
-   * @param {Object} partialData
-   * @returns {Object|null} Data produk setelah patch atau null jika ID tidak ditemukan
-   */
   patch(id, partialData) {
     const index = products.findIndex(p => String(p.id) === String(id));
     if (index === -1) return null;
@@ -222,11 +190,6 @@ const ProductModel = {
     return current;
   },
 
-  /**
-   * Menghapus produk dari katalog berdasarkan ID
-   * @param {number|string} id
-   * @returns {Object|null} Objek yang dihapus atau null jika ID tidak ditemukan
-   */
   delete(id) {
     const index = products.findIndex(p => String(p.id) === String(id));
     if (index === -1) return null;
@@ -235,14 +198,9 @@ const ProductModel = {
     return deletedItem;
   },
 
-  /**
-   * Mengembalikan jumlah produk yang ada
-   * @returns {number}
-   */
   count() {
     return products.length;
   }
 };
 
 module.exports = ProductModel;
-

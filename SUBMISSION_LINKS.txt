@@ -4,22 +4,23 @@ DIBIMBING BOOTCAMP - BACK END WEB DEVELOPMENT (BE-19)
 ================================================================================
 Nama Student : Jihadul Hanif
 Topik        : Modern Back-End Development with AI (E-Commerce Catalog Service)
-Tanggal      : 29 Oktober 2026
+Tanggal      : 31 Oktober 2026
 --------------------------------------------------------------------------------
 
 1. Link GitHub Repository :
-   [TEMPELKAN LINK REPOSITORI GITHUB DI SINI]
-   Contoh: https://github.com/username/ecommerce-product-catalog-api
+   https://github.com/jihadulhaniffs/Mini-Project-Back-End-Web-Developer-AI-First-Dibimbing
 
 2. Link Postingan LinkedIn:
-   [TEMPELKAN LINK POSTINGAN LINKEDIN DI SINI]
-   Contoh: https://www.linkedin.com/posts/username_...
+   [TEMPELKAN LINK POSTINGAN LINKEDIN DI SINI SETELAH POSTING]
+   Contoh: https://www.linkedin.com/posts/jihadulhanif_...
 
 ================================================================================
-Catatan Tambahan:
-- Back End: Node.js & Express.js (Modular MVC, RESTful API CRUD)
-- API Documentation: Swagger UI (/api-docs) & Postman Collection v2.1
-- Database Reference: Relational SQL Schema (database/schema.sql)
-- Frontend Integration: Interactive Product Detail Pages (public/)
+Catatan Teknis Proyek:
+- Back End: Node.js & Express.js (Arsitektur Modular, RESTful API CRUD 6 Endpoints)
+- Fitur GET: Mendukung Pagination (page, limit), Search, Filter Kategori, Rentang Harga, Sorting
+- Fitur PUT: Full Replacement (Semua field wajib disertakan)
+- Fitur PATCH: Partial Update (Hanya field yang ingin diubah)
+- Dokumentasi: Swagger UI (/api-docs), Raw OpenAPI Spec (/api-docs.json), & Postman Collection v2.1
+- Pengujian Otomatis: 19 Skenario Pengujian (test-api.js -> npm test)
+- Skema Database: Relational SQL Schema DDL & DML (database/schema.sql)
 ================================================================================
-

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "c1f7b889-8d8a-4993-9c87-8df7d9d0e2e1",
     "name": "Dibimbing - E-Commerce Product Catalog REST API",
-    "description": "Postman Collection resmi untuk pengujian lengkap REST API E-Commerce Catalog Service (Dibimbing Web Development Bootcamp).\nMendukung seluruh metode: GET, POST (API PUSH), PUT, PATCH, dan DELETE lengkap dengan uji validasi error 400 dan 404.",
+    "description": "Koleksi Postman resmi untuk pengujian REST API E-Commerce Catalog Service (Dibimbing Web Development Bootcamp).\nMencakup 6 endpoint utama: GET (Daftar & Detail), POST (Tambah), PUT (Penggantian Penuh), PATCH (Pembaruan Parsial), dan DELETE (Hapus) lengkap dengan contoh respons tersimpan dan pengujian otomatis.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -14,31 +14,31 @@
   ],
   "item": [
     {
-      "name": "1. GET - List Semua Produk",
+      "name": "1. GET - Daftar Produk (Paginasi, Filter & Pengurutan)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code adalah 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Respons memiliki field pagination dan data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.eql(true);",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/products",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "products"
-          ]
-        },
-        "description": "Mengambil seluruh daftar produk dari katalog e-commerce."
-      },
-      "response": []
-    },
-    {
-      "name": "2. GET - List Produk (Filter & Search & Sort)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/products?search=wireless&category=Elektronik&sort=price_asc",
+          "raw": "{{baseUrl}}/api/products?page=1&limit=10&search=headphone&category=Elektronik&sort=price_asc",
           "host": [
             "{{baseUrl}}"
           ],
@@ -48,28 +48,76 @@
           ],
           "query": [
             {
+              "key": "page",
+              "value": "1",
+              "description": "Nomor halaman"
+            },
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Jumlah item per halaman"
+            },
+            {
               "key": "search",
-              "value": "wireless",
-              "description": "Pencarian kata kunci"
+              "value": "headphone",
+              "description": "Kata kunci pencarian"
             },
             {
               "key": "category",
               "value": "Elektronik",
-              "description": "Filter kategori"
+              "description": "Filter kategori spesifik"
             },
             {
               "key": "sort",
               "value": "price_asc",
-              "description": "Urutkan termurah ke termahal"
+              "description": "Pengurutan harga termurah ke termahal"
             }
           ]
         },
-        "description": "Mengambil daftar produk dengan filter pencarian kata kunci, kategori, dan sorting."
+        "description": "Mengambil daftar produk dari katalog dengan dukungan paginasi, pencarian kata kunci, filter kategori, rentang harga, dan pengurutan."
       },
-      "response": []
+      "response": [
+        {
+          "name": "200 OK - Sukses Mengambil Daftar Produk",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
+          ],
+          "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Daftar produk berhasil diambil.\",\n  \"pagination\": {\n    \"totalItems\": 5,\n    \"currentPage\": 1,\n    \"totalPages\": 1,\n    \"limit\": 10\n  },\n  \"filtersApplied\": {\n    \"search\": null,\n    \"category\": null,\n    \"minPrice\": null,\n    \"maxPrice\": null,\n    \"sort\": null\n  },\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Headphone Wireless Noise Cancelling Pro\",\n      \"category\": \"Elektronik\",\n      \"price\": 750000,\n      \"image\": \"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80\",\n      \"images\": [\n        \"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80\"\n      ],\n      \"variants\": {\n        \"colorOrSize\": [\"Hitam\", \"Silver\", \"Midnight Blue\"],\n        \"quantity\": 15\n      },\n      \"description\": \"Headphone over-ear nirkabel dengan teknologi ANC dan baterai 30 jam.\"\n    }\n  ]\n}"
+        }
+      ]
     },
     {
-      "name": "3. GET - Detail Produk by ID (200 OK)",
+      "name": "2. GET - Detail Produk berdasarkan ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code adalah 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Mengembalikan data produk yang sesuai\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.eql(true);",
+              "    pm.expect(jsonData.data).to.have.property('id');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [],
@@ -84,32 +132,69 @@
             "1"
           ]
         },
-        "description": "Mengambil informasi detail produk dengan ID 1."
+        "description": "Mengambil informasi detail satu produk berdasarkan parameter ID."
       },
-      "response": []
-    },
-    {
-      "name": "4. GET - Detail Produk by ID (404 Not Found)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/products/999",
-          "host": [
-            "{{baseUrl}}"
+      "response": [
+        {
+          "name": "200 OK - Detail Produk Ditemukan",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "1"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
           ],
-          "path": [
-            "api",
-            "products",
-            "999"
-          ]
+          "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Detail produk ID '1' berhasil ditemukan.\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Headphone Wireless Noise Cancelling Pro\",\n    \"category\": \"Elektronik\",\n    \"price\": 750000,\n    \"image\": \"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80\",\n    \"images\": [\n      \"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80\"\n    ],\n    \"variants\": {\n      \"colorOrSize\": [\"Hitam\", \"Silver\", \"Midnight Blue\"],\n      \"quantity\": 15\n    },\n    \"description\": \"Headphone over-ear nirkabel dengan teknologi ANC dan baterai 30 jam.\"\n  }\n}"
         },
-        "description": "Menguji respon ketika ID produk tidak ada di katalog (ekspektasi status 404)."
-      },
-      "response": []
+        {
+          "name": "404 Not Found - Produk Tidak Ditemukan",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "999"]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
+          ],
+          "body": "{\n  \"success\": false,\n  \"statusCode\": 404,\n  \"error\": \"Product Not Found\",\n  \"message\": \"Produk dengan ID '999' tidak ditemukan di katalog.\"\n}"
+        }
+      ]
     },
     {
-      "name": "5. POST - Tambah Produk Baru (201 Created - API PUSH)",
+      "name": "3. POST - Tambah Produk Baru",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code adalah 201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test(\"Produk baru memiliki ID otomatis\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.eql(true);",
+              "    pm.expect(jsonData.data.id).to.be.a('number');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -120,7 +205,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"Keyboard Mechanical RGB Hot-Swappable\",\n  \"category\": \"Elektronik\",\n  \"price\": 650000,\n  \"image\": \"https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80\",\n  \"variants\": {\n    \"colorOrSize\": [\"Red Switch\", \"Blue Switch\", \"Brown Switch\"],\n    \"quantity\": 20\n  },\n  \"description\": \"Keyboard mechanical layout 75% dengan konektivitas Bluetooth 5.0, RGB lighting per-key, dan baterai 4000mAh.\"\n}"
+          "raw": "{\n  \"name\": \"Keyboard Mechanical RGB Hot-Swappable\",\n  \"category\": \"Elektronik\",\n  \"price\": 650000,\n  \"image\": \"https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80\",\n  \"variants\": {\n    \"colorOrSize\": [\"Red Switch\", \"Blue Switch\", \"Brown Switch\"],\n    \"quantity\": 20\n  },\n  \"description\": \"Keyboard mechanical 75% dengan Bluetooth 5.0 dan baterai 4000mAh.\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/products",
@@ -132,40 +217,77 @@
             "products"
           ]
         },
-        "description": "Menambahkan produk baru ke katalog in-memory. ID otomatis di-generate oleh sistem."
+        "description": "Menambahkan produk baru ke katalog in-memory. ID di-generate secara otomatis."
       },
-      "response": []
-    },
-    {
-      "name": "6. POST - Tambah Produk Validasi Gagal (400 Bad Request)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"\",\n  \"price\": -50000,\n  \"description\": \"\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/products",
-          "host": [
-            "{{baseUrl}}"
+      "response": [
+        {
+          "name": "201 Created - Produk Berhasil Dibuat",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Keyboard Mechanical RGB Hot-Swappable\",\n  \"category\": \"Elektronik\",\n  \"price\": 650000,\n  \"image\": \"https://images.unsplash.com/photo-1587829741301-dc798b83add3\",\n  \"variants\": {\n    \"colorOrSize\": [\"Red Switch\", \"Blue Switch\"],\n    \"quantity\": 20\n  },\n  \"description\": \"Keyboard mechanical 75% Bluetooth 5.0.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
           ],
-          "path": [
-            "api",
-            "products"
-          ]
+          "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Produk baru berhasil ditambahkan ke katalog.\",\n  \"data\": {\n    \"id\": 6,\n    \"name\": \"Keyboard Mechanical RGB Hot-Swappable\",\n    \"category\": \"Elektronik\",\n    \"price\": 650000,\n    \"image\": \"https://images.unsplash.com/photo-1587829741301-dc798b83add3\",\n    \"images\": [\"https://images.unsplash.com/photo-1587829741301-dc798b83add3\"],\n    \"variants\": {\n      \"colorOrSize\": [\"Red Switch\", \"Blue Switch\"],\n      \"quantity\": 20\n    },\n    \"description\": \"Keyboard mechanical 75% Bluetooth 5.0.\"\n  }\n}"
         },
-        "description": "Menguji middleware validasi ketika data nama kosong, harga negatif, dan varian tidak disertakan."
-      },
-      "response": []
+        {
+          "name": "400 Bad Request - Validasi Input Gagal",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"price\": -50000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
+          ],
+          "body": "{\n  \"success\": false,\n  \"statusCode\": 400,\n  \"error\": \"Validation Error\",\n  \"message\": \"Data produk tidak memenuhi syarat validasi.\",\n  \"details\": [\n    \"Field 'name' wajib diisi berupa teks non-kosong.\",\n    \"Field 'category' wajib diisi berupa teks non-kosong.\",\n    \"Field 'price' wajib diisi berupa angka positif (>= 0).\",\n    \"Field 'description' wajib diisi berupa teks non-kosong.\",\n    \"Field 'image' wajib diisi dengan format URL yang valid (http:// atau https://).\",\n    \"Field 'variants' wajib berupa object dengan properti 'colorOrSize' dan 'quantity'.\"\n  ]\n}"
+        }
+      ]
     },
     {
-      "name": "7. PUT - Ganti Seluruh Data Produk (200 OK)",
+      "name": "4. PUT - Perbarui Seluruh Data Produk (Penggantian Penuh)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code adalah 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Semua field produk ter-update\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.eql(true);",
+              "    pm.expect(jsonData.data.price).to.eql(890000);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "PUT",
         "header": [
@@ -176,7 +298,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"Headphone Wireless Noise Cancelling Pro Gen 2\",\n  \"category\": \"Elektronik\",\n  \"price\": 890000,\n  \"image\": \"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80\",\n  \"variants\": {\n    \"colorOrSize\": [\"Hitam Doff\", \"Silver Titanium\", \"Midnight Blue\"],\n    \"quantity\": 35\n  },\n  \"description\": \"Generasi kedua headphone ANC dengan peningkatan driver audio 45mm dan baterai tahan hingga 40 jam.\"\n}"
+          "raw": "{\n  \"name\": \"Headphone Wireless Noise Cancelling Pro Gen 2\",\n  \"category\": \"Elektronik\",\n  \"price\": 890000,\n  \"image\": \"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80\",\n  \"variants\": {\n    \"colorOrSize\": [\"Hitam Doff\", \"Silver Titanium\"],\n    \"quantity\": 35\n  },\n  \"description\": \"Generasi kedua headphone ANC dengan driver 45mm dan baterai 40 jam.\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/products/1",
@@ -189,41 +311,77 @@
             "1"
           ]
         },
-        "description": "Memperbarui seluruh data produk dengan ID 1 menggunakan metode PUT."
+        "description": "Mengganti seluruh nilai field pada produk yang sudah ada (Penggantian Penuh). Berbeda dengan PATCH, semua field wajib dikirim."
       },
-      "response": []
-    },
-    {
-      "name": "8. PUT - Ganti Produk Tidak Ditemukan (404 Not Found)",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"Produk Fiktif\",\n  \"category\": \"General\",\n  \"price\": 100000,\n  \"image\": \"https://example.com/foto.jpg\",\n  \"variants\": {\n    \"colorOrSize\": [\"Default\"],\n    \"quantity\": 1\n  },\n  \"description\": \"Testing ID 999\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/products/999",
-          "host": [
-            "{{baseUrl}}"
+      "response": [
+        {
+          "name": "200 OK - Produk Berhasil Diperbarui Penuh",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Headphone Wireless Noise Cancelling Pro Gen 2\",\n  \"category\": \"Elektronik\",\n  \"price\": 890000,\n  \"image\": \"https://images.unsplash.com/photo-1505740420928-5e560c06d30e\",\n  \"variants\": {\n    \"colorOrSize\": [\"Hitam Doff\"],\n    \"quantity\": 35\n  },\n  \"description\": \"Versi pembaruan lengkap.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "1"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
           ],
-          "path": [
-            "api",
-            "products",
-            "999"
-          ]
+          "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Seluruh data produk ID '1' berhasil diperbarui.\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Headphone Wireless Noise Cancelling Pro Gen 2\",\n    \"category\": \"Elektronik\",\n    \"price\": 890000,\n    \"image\": \"https://images.unsplash.com/photo-1505740420928-5e560c06d30e\",\n    \"images\": [\"https://images.unsplash.com/photo-1505740420928-5e560c06d30e\"],\n    \"variants\": {\n      \"colorOrSize\": [\"Hitam Doff\"],\n      \"quantity\": 35\n    },\n    \"description\": \"Versi pembaruan lengkap.\"\n  }\n}"
         },
-        "description": "Menguji operasi PUT untuk produk yang tidak terdaftar."
-      },
-      "response": []
+        {
+          "name": "404 Not Found - Produk Tidak Ditemukan",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dummy\",\n  \"category\": \"Elektronik\",\n  \"price\": 100000,\n  \"image\": \"https://example.com/p.jpg\",\n  \"variants\": {\"colorOrSize\": [\"A\"], \"quantity\": 1},\n  \"description\": \"test\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "999"]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
+          ],
+          "body": "{\n  \"success\": false,\n  \"statusCode\": 404,\n  \"error\": \"Product Not Found\",\n  \"message\": \"Produk dengan ID '999' tidak ditemukan untuk diperbarui.\"\n}"
+        }
+      ]
     },
     {
-      "name": "9. PATCH - Ubah Sebagian Field Produk (200 OK)",
+      "name": "5. PATCH - Perbarui Sebagian Data Produk (Pembaruan Parsial)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code adalah 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Field parsial berhasil diubah\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.eql(true);",
+              "    pm.expect(jsonData.data.price).to.eql(320000);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "PATCH",
         "header": [
@@ -247,12 +405,54 @@
             "2"
           ]
         },
-        "description": "Mengubah hanya harga dan kuantitas stok tanpa mengubah field nama atau foto."
+        "description": "Memperbarui sebagian field produk tanpa harus mengirimkan seluruh objek. Field yang tidak dikirimkan akan mempertahankan nilai lamanya."
       },
-      "response": []
+      "response": [
+        {
+          "name": "200 OK - Sebagian Data Berhasil Diubah",
+          "originalRequest": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 320000,\n  \"variants\": {\n    \"quantity\": 18\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "2"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
+          ],
+          "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Sebagian data produk ID '2' berhasil diubah.\",\n  \"data\": {\n    \"id\": 2,\n    \"name\": \"Speaker Bluetooth Mini Portable Waterproof IPX7\",\n    \"category\": \"Elektronik\",\n    \"price\": 320000,\n    \"image\": \"https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80\",\n    \"variants\": {\n      \"colorOrSize\": [\"Matte Black\", \"Ocean Blue\", \"Forest Green\", \"Ruby Red\"],\n      \"quantity\": 18\n    },\n    \"description\": \"Speaker portable ringkas tahan air IPX7.\"\n  }\n}"
+        }
+      ]
     },
     {
-      "name": "10. DELETE - Hapus Produk by ID (200 OK)",
+      "name": "6. DELETE - Hapus Produk berdasarkan ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code adalah 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Data yang dihapus dikembalikan sebagai konfirmasi\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.eql(true);",
+              "    pm.expect(jsonData.data).to.have.property('id');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "DELETE",
         "header": [],
@@ -267,30 +467,48 @@
             "1"
           ]
         },
-        "description": "Menghapus produk ID 1 dari katalog in-memory."
+        "description": "Menghapus produk dari katalog in-memory berdasarkan parameter ID."
       },
-      "response": []
-    },
-    {
-      "name": "11. DELETE - Hapus Produk Tidak Ada (404 Not Found)",
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/products/999",
-          "host": [
-            "{{baseUrl}}"
+      "response": [
+        {
+          "name": "200 OK - Produk Berhasil Dihapus",
+          "originalRequest": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "1"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
           ],
-          "path": [
-            "api",
-            "products",
-            "999"
-          ]
+          "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Produk 'Headphone Wireless Noise Cancelling Pro' (ID: 1) berhasil dihapus dari katalog.\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Headphone Wireless Noise Cancelling Pro\",\n    \"category\": \"Elektronik\",\n    \"price\": 750000\n  }\n}"
         },
-        "description": "Menguji respon 404 ketika menghapus produk dengan ID yang tidak ada."
-      },
-      "response": []
+        {
+          "name": "404 Not Found - Produk Tidak Ditemukan",
+          "originalRequest": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "999"]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json; charset=utf-8" }
+          ],
+          "body": "{\n  \"success\": false,\n  \"statusCode\": 404,\n  \"error\": \"Product Not Found\",\n  \"message\": \"Produk dengan ID '999' tidak ditemukan untuk dihapus.\"\n}"
+        }
+      ]
     }
   ]
 }
-

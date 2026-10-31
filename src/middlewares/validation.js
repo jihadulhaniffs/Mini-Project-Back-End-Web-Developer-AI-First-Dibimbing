@@ -1,122 +1,138 @@
 /**
  * src/middlewares/validation.js
- * Middleware validasi request body untuk operasi penambahan (POST),
- * penggantian penuh (PUT), dan perubahan parsial (PATCH).
+ * Middleware validasi request body untuk POST, PUT, dan PATCH.
  */
 
 'use strict';
 
-/**
- * Validasi untuk POST /api/products
- * Memastikan semua field minimal terpenuhi sesuai spesifikasi tugas
- */
-function validateCreateProduct(req, res, next) {
-  const { name, price, description, variants, image } = req.body;
-  const errors = [];
+const ApiResponse = require('../utils/apiResponse');
 
-  // Validasi Nama Produk
+/**
+ * Memvalidasi apakah string merupakan format URL valid (http:// atau https://)
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isValidUrl(url) {
+  if (typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Memvalidasi struktur dan nilai field variants
+ * @param {*} variants
+ * @returns {string|null} Pesan error atau null jika valid
+ */
+function validateVariants(variants) {
+  if (!variants || typeof variants !== 'object' || Array.isArray(variants)) {
+    return "Field 'variants' wajib berupa object dengan properti 'colorOrSize' dan 'quantity'.";
+  }
+
+  const { colorOrSize, quantity } = variants;
+
+  if (Array.isArray(colorOrSize)) {
+    if (colorOrSize.length === 0) {
+      return "Field 'variants.colorOrSize' tidak boleh berupa array kosong.";
+    }
+    const hasInvalidItem = colorOrSize.some(item => typeof item !== 'string' || item.trim() === '');
+    if (hasInvalidItem) {
+      return "Setiap elemen pada 'variants.colorOrSize' harus berupa teks non-kosong.";
+    }
+  } else if (typeof colorOrSize === 'string') {
+    if (colorOrSize.trim() === '') {
+      return "Field 'variants.colorOrSize' tidak boleh berupa teks kosong.";
+    }
+  } else {
+    return "Field 'variants.colorOrSize' wajib berupa array teks atau string non-kosong.";
+  }
+
+  if (quantity === undefined || typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 0) {
+    return "Field 'variants.quantity' wajib berupa bilangan bulat positif atau nol (integer >= 0).";
+  }
+
+  return null;
+}
+
+/**
+ * Validasi umum untuk operasi penambahan (POST) dan penggantian penuh (PUT)
+ * @param {Object} body
+ * @returns {Array<string>} Daftar pesan error
+ */
+function validateFullProduct(body) {
+  const errors = [];
+  const { name, category, price, description, image, variants } = body;
+
   if (!name || typeof name !== 'string' || name.trim() === '') {
     errors.push("Field 'name' wajib diisi berupa teks non-kosong.");
   }
 
-  // Validasi Harga Produk
+  if (!category || typeof category !== 'string' || category.trim() === '') {
+    errors.push("Field 'category' wajib diisi berupa teks non-kosong.");
+  }
+
   if (price === undefined || typeof price !== 'number' || isNaN(price) || price < 0) {
     errors.push("Field 'price' wajib diisi berupa angka positif (>= 0).");
   }
 
-  // Validasi Deskripsi Produk
   if (!description || typeof description !== 'string' || description.trim() === '') {
     errors.push("Field 'description' wajib diisi berupa teks non-kosong.");
   }
 
-  // Validasi Variasi Produk (variants: { colorOrSize, quantity })
-  if (!variants || typeof variants !== 'object' || Array.isArray(variants)) {
-    errors.push("Field 'variants' wajib berupa object yang memiliki 'colorOrSize' dan 'quantity'.");
-  } else {
-    if (!variants.colorOrSize || (!Array.isArray(variants.colorOrSize) && typeof variants.colorOrSize !== 'string')) {
-      errors.push("Field 'variants.colorOrSize' wajib berupa array teks atau string.");
-    }
-    if (variants.quantity === undefined || typeof variants.quantity !== 'number' || isNaN(variants.quantity) || variants.quantity < 0) {
-      errors.push("Field 'variants.quantity' wajib berupa angka positif (>= 0).");
-    }
+  if (!image || !isValidUrl(image)) {
+    errors.push("Field 'image' wajib diisi dengan format URL yang valid (http:// atau https://).");
   }
 
-  // Validasi Image jika dikirim
-  if (image !== undefined && (typeof image !== 'string' || image.trim() === '')) {
-    errors.push("Field 'image' jika disertakan harus berupa URL string.");
+  const variantError = validateVariants(variants);
+  if (variantError) {
+    errors.push(variantError);
   }
+
+  return errors;
+}
+
+/**
+ * Middleware validasi untuk POST /api/products
+ */
+function validateCreateProduct(req, res, next) {
+  const errors = validateFullProduct(req.body);
 
   if (errors.length > 0) {
-    return res.status(400).json({
-      success: false,
-      statusCode: 400,
-      error: 'Validation Error',
-      message: 'Data produk tidak memenuhi syarat validasi.',
-      details: errors
-    });
+    return ApiResponse.error(res, 400, 'Validation Error', 'Data produk tidak memenuhi syarat validasi.', errors);
   }
 
   next();
 }
 
 /**
- * Validasi untuk PUT /api/products/:id
- * Method PUT mewajibkan semua field untuk me-replace seluruh data produk
+ * Middleware validasi untuk PUT /api/products/:id (Full Replacement)
  */
 function validateUpdateProduct(req, res, next) {
-  const { name, price, description, variants, image } = req.body;
-  const errors = [];
-
-  if (!name || typeof name !== 'string' || name.trim() === '') {
-    errors.push("Field 'name' wajib diisi untuk operasi PUT.");
-  }
-
-  if (price === undefined || typeof price !== 'number' || isNaN(price) || price < 0) {
-    errors.push("Field 'price' wajib diisi berupa angka positif (>= 0) untuk operasi PUT.");
-  }
-
-  if (!description || typeof description !== 'string' || description.trim() === '') {
-    errors.push("Field 'description' wajib diisi untuk operasi PUT.");
-  }
-
-  if (!variants || typeof variants !== 'object' || Array.isArray(variants)) {
-    errors.push("Field 'variants' wajib berupa object dengan 'colorOrSize' dan 'quantity'.");
-  } else {
-    if (!variants.colorOrSize || (!Array.isArray(variants.colorOrSize) && typeof variants.colorOrSize !== 'string')) {
-      errors.push("Field 'variants.colorOrSize' wajib diisi.");
-    }
-    if (variants.quantity === undefined || typeof variants.quantity !== 'number' || isNaN(variants.quantity) || variants.quantity < 0) {
-      errors.push("Field 'variants.quantity' wajib diisi berupa angka positif (>= 0).");
-    }
-  }
-
-  if (!image || typeof image !== 'string' || image.trim() === '') {
-    errors.push("Field 'image' wajib diisi (URL string) untuk operasi PUT.");
-  }
+  const errors = validateFullProduct(req.body);
 
   if (errors.length > 0) {
-    return res.status(400).json({
-      success: false,
-      statusCode: 400,
-      error: 'Validation Error',
-      message: 'Semua field wajib diisi lengkap untuk operasi PUT (Full Replace).',
-      details: errors
-    });
+    return ApiResponse.error(res, 400, 'Validation Error', 'Semua field wajib diisi lengkap untuk operasi PUT (penggantian penuh).', errors);
   }
 
   next();
 }
 
 /**
- * Validasi untuk PATCH /api/products/:id
- * Hanya memvalidasi field yang dikirimkan oleh client
+ * Middleware validasi untuk PATCH /api/products/:id (Partial Update)
  */
 function validatePatchProduct(req, res, next) {
-  const { name, price, description, variants, image } = req.body;
+  const { name, category, price, description, image, variants } = req.body;
   const errors = [];
 
   if (name !== undefined && (typeof name !== 'string' || name.trim() === '')) {
     errors.push("Field 'name' harus berupa teks non-kosong.");
+  }
+
+  if (category !== undefined && (typeof category !== 'string' || category.trim() === '')) {
+    errors.push("Field 'category' harus berupa teks non-kosong.");
   }
 
   if (price !== undefined && (typeof price !== 'number' || isNaN(price) || price < 0)) {
@@ -127,31 +143,19 @@ function validatePatchProduct(req, res, next) {
     errors.push("Field 'description' harus berupa teks non-kosong.");
   }
 
-  if (image !== undefined && (typeof image !== 'string' || image.trim() === '')) {
-    errors.push("Field 'image' harus berupa URL string non-kosong.");
+  if (image !== undefined && !isValidUrl(image)) {
+    errors.push("Field 'image' harus berupa format URL yang valid (http:// atau https://).");
   }
 
   if (variants !== undefined) {
-    if (typeof variants !== 'object' || Array.isArray(variants)) {
-      errors.push("Field 'variants' harus berupa object.");
-    } else {
-      if (variants.colorOrSize !== undefined && !Array.isArray(variants.colorOrSize) && typeof variants.colorOrSize !== 'string') {
-        errors.push("Field 'variants.colorOrSize' harus berupa array atau string.");
-      }
-      if (variants.quantity !== undefined && (typeof variants.quantity !== 'number' || isNaN(variants.quantity) || variants.quantity < 0)) {
-        errors.push("Field 'variants.quantity' harus berupa angka positif (>= 0).");
-      }
+    const variantError = validateVariants(variants);
+    if (variantError) {
+      errors.push(variantError);
     }
   }
 
   if (errors.length > 0) {
-    return res.status(400).json({
-      success: false,
-      statusCode: 400,
-      error: 'Validation Error',
-      message: 'Perubahan parsial pada field tidak valid.',
-      details: errors
-    });
+    return ApiResponse.error(res, 400, 'Validation Error', 'Perubahan parsial pada field tidak valid.', errors);
   }
 
   next();
@@ -162,4 +166,3 @@ module.exports = {
   validateUpdateProduct,
   validatePatchProduct
 };
-

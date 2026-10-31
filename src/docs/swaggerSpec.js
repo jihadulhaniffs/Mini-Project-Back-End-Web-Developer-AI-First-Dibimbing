@@ -1,7 +1,6 @@
 /**
  * src/docs/swaggerSpec.js
  * Spesifikasi OpenAPI 3.0.0 untuk E-Commerce Product Catalog REST API.
- * Digunakan oleh Swagger UI di /api-docs.
  */
 
 'use strict';
@@ -11,10 +10,9 @@ const swaggerSpec = {
   info: {
     title: 'E-Commerce Product Catalog REST API',
     version: '1.0.0',
-    description: 'REST API sederhana untuk katalog produk e-commerce yang dibangun dengan Node.js dan Express.js sesuai standar Bootcamp Dibimbing Web Development.',
+    description: 'REST API untuk katalog produk e-commerce yang dibangun dengan Node.js dan Express.js sesuai standar Bootcamp Dibimbing Web Development.',
     contact: {
-      name: 'Jihadul Hanif',
-      url: 'https://github.com/'
+      name: 'Jihadul Hanif'
     }
   },
   servers: [
@@ -33,9 +31,23 @@ const swaggerSpec = {
     '/api/products': {
       get: {
         tags: ['Products'],
-        summary: 'Mengambil seluruh daftar produk (GET)',
-        description: 'Mengembalikan daftar produk dengan dukungan filter kata kunci, kategori, rentang harga, dan sorting.',
+        summary: 'Mengambil daftar produk (GET)',
+        description: 'Mengembalikan daftar produk dengan dukungan pagination, pencarian kata kunci, filter kategori, rentang harga, dan sorting.',
         parameters: [
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Nomor halaman (default: 1)',
+            required: false,
+            schema: { type: 'integer', default: 1, example: 1 }
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            description: 'Jumlah item per halaman (default: 10, max: 100)',
+            required: false,
+            schema: { type: 'integer', default: 10, example: 10 }
+          },
           {
             name: 'search',
             in: 'query',
@@ -53,14 +65,14 @@ const swaggerSpec = {
           {
             name: 'minPrice',
             in: 'query',
-            description: 'Batas harga minimum (angka)',
+            description: 'Batas harga minimum (angka positif)',
             required: false,
             schema: { type: 'number', example: 100000 }
           },
           {
             name: 'maxPrice',
             in: 'query',
-            description: 'Batas harga maksimum (angka)',
+            description: 'Batas harga maksimum (angka positif)',
             required: false,
             schema: { type: 'number', example: 1000000 }
           },
@@ -87,7 +99,25 @@ const swaggerSpec = {
                     success: { type: 'boolean', example: true },
                     statusCode: { type: 'integer', example: 200 },
                     message: { type: 'string', example: 'Daftar produk berhasil diambil.' },
-                    count: { type: 'integer', example: 5 },
+                    pagination: {
+                      type: 'object',
+                      properties: {
+                        totalItems: { type: 'integer', example: 5 },
+                        currentPage: { type: 'integer', example: 1 },
+                        totalPages: { type: 'integer', example: 1 },
+                        limit: { type: 'integer', example: 10 }
+                      }
+                    },
+                    filtersApplied: {
+                      type: 'object',
+                      properties: {
+                        search: { type: 'string', nullable: true, example: 'headphone' },
+                        category: { type: 'string', nullable: true, example: 'Elektronik' },
+                        minPrice: { type: 'number', nullable: true, example: 100000 },
+                        maxPrice: { type: 'number', nullable: true, example: 1000000 },
+                        sort: { type: 'string', nullable: true, example: 'price_asc' }
+                      }
+                    },
                     data: {
                       type: 'array',
                       items: { $ref: '#/components/schemas/Product' }
@@ -109,24 +139,13 @@ const swaggerSpec = {
       },
       post: {
         tags: ['Products'],
-        summary: 'Menambahkan produk baru (POST / API PUSH)',
-        description: 'Menambahkan data produk baru ke dalam katalog in-memory. ID di-generate otomatis.',
+        summary: 'Menambahkan produk baru (POST)',
+        description: 'Menambahkan data produk baru ke dalam katalog. ID di-generate secara otomatis. Semua field wajib diisi.',
         requestBody: {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/ProductInput' },
-              example: {
-                name: 'Keyboard Mechanical Wireless RGB',
-                category: 'Elektronik',
-                price: 650000,
-                image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80',
-                variants: {
-                  colorOrSize: ['Red Switch', 'Blue Switch', 'Brown Switch'],
-                  quantity: 20
-                },
-                description: 'Keyboard mechanical kompak 75% dengan konektivitas Bluetooth 5.0 dan switch hot-swappable.'
-              }
+              schema: { $ref: '#/components/schemas/ProductInput' }
             }
           }
         },
@@ -201,8 +220,8 @@ const swaggerSpec = {
       },
       put: {
         tags: ['Products'],
-        summary: 'Mengganti seluruh data produk (PUT)',
-        description: 'Mengganti seluruh nilai field pada produk yang sudah ada (Full Replacement). Semua field wajib disertakan.',
+        summary: 'Mengganti seluruh data produk (PUT - Full Replacement)',
+        description: 'Mengganti seluruh nilai field pada produk yang sudah ada. Berbeda dengan PATCH, method PUT mewajibkan SELURUH field (name, category, price, image, variants, description) dikirim ulang untuk menggantikan data lama.',
         parameters: [
           {
             name: 'id',
@@ -216,24 +235,13 @@ const swaggerSpec = {
           required: true,
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/ProductInput' },
-              example: {
-                name: 'Headphone Wireless Noise Cancelling Pro Gen 2',
-                category: 'Elektronik',
-                price: 890000,
-                image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
-                variants: {
-                  colorOrSize: ['Hitam Doff', 'Silver Titanium'],
-                  quantity: 35
-                },
-                description: 'Headphone versi 2 dengan ANC hybrid yang ditingkatkan dan baterai 45 jam.'
-              }
+              schema: { $ref: '#/components/schemas/ProductInput' }
             }
           }
         },
         responses: {
           200: {
-            description: 'Produk berhasil diperbarui',
+            description: 'Seluruh data produk berhasil diperbarui',
             content: {
               'application/json': {
                 schema: {
@@ -241,7 +249,7 @@ const swaggerSpec = {
                   properties: {
                     success: { type: 'boolean', example: true },
                     statusCode: { type: 'integer', example: 200 },
-                    message: { type: 'string', example: 'Seluruh data produk berhasil diperbarui.' },
+                    message: { type: 'string', example: 'Seluruh data produk ID 1 berhasil diperbarui.' },
                     data: { $ref: '#/components/schemas/Product' }
                   }
                 }
@@ -249,7 +257,7 @@ const swaggerSpec = {
             }
           },
           400: {
-            description: 'Field wajib tidak lengkap',
+            description: 'Field wajib tidak lengkap atau tidak valid',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -268,14 +276,14 @@ const swaggerSpec = {
       },
       patch: {
         tags: ['Products'],
-        summary: 'Mengubah sebagian data produk (PATCH)',
-        description: 'Mengubah satu atau beberapa field tanpa harus mengirimkan seluruh objek produk.',
+        summary: 'Memperbarui sebagian data produk (PATCH - Partial Update)',
+        description: 'Memperbarui hanya satu atau beberapa field data produk tanpa harus mengirimkan seluruh objek. Field yang tidak disertakan akan mempertahankan nilai sebelumnya.',
         parameters: [
           {
             name: 'id',
             in: 'path',
             required: true,
-            description: 'ID produk yang akan diubah',
+            description: 'ID produk yang akan diubah sebagian',
             schema: { type: 'integer', example: 1 }
           }
         ],
@@ -283,11 +291,25 @@ const swaggerSpec = {
           required: true,
           content: {
             'application/json': {
-              schema: { type: 'object' },
-              example: {
-                price: 820000,
-                variants: {
-                  quantity: 18
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', example: 'Headphone Wireless Pro Black' },
+                  category: { type: 'string', example: 'Elektronik' },
+                  price: { type: 'number', example: 820000 },
+                  image: { type: 'string', example: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e' },
+                  variants: {
+                    type: 'object',
+                    properties: {
+                      colorOrSize: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        example: ['Hitam Doff']
+                      },
+                      quantity: { type: 'integer', example: 25 }
+                    }
+                  },
+                  description: { type: 'string', example: 'Pembaruan deskripsi ringkas.' }
                 }
               }
             }
@@ -295,7 +317,7 @@ const swaggerSpec = {
         },
         responses: {
           200: {
-            description: 'Data produk berhasil diubah secara parsial',
+            description: 'Sebagian data produk berhasil diubah',
             content: {
               'application/json': {
                 schema: {
@@ -303,7 +325,7 @@ const swaggerSpec = {
                   properties: {
                     success: { type: 'boolean', example: true },
                     statusCode: { type: 'integer', example: 200 },
-                    message: { type: 'string', example: 'Sebagian data produk berhasil diubah.' },
+                    message: { type: 'string', example: 'Sebagian data produk ID 1 berhasil diubah.' },
                     data: { $ref: '#/components/schemas/Product' }
                   }
                 }
@@ -311,7 +333,7 @@ const swaggerSpec = {
             }
           },
           400: {
-            description: 'Nilai field tidak valid',
+            description: 'Nilai field yang dikirim tidak valid',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -395,17 +417,17 @@ const swaggerSpec = {
               quantity: { type: 'integer', example: 15 }
             }
           },
-          description: { type: 'string', example: 'Headphone over-ear nirkabel dengan ANC...' }
+          description: { type: 'string', example: 'Headphone over-ear nirkabel dengan ANC dan baterai 30 jam.' }
         }
       },
       ProductInput: {
         type: 'object',
-        required: ['name', 'price', 'description', 'variants'],
+        required: ['name', 'category', 'price', 'description', 'image', 'variants'],
         properties: {
-          name: { type: 'string', example: 'Mouse Wireless Silent Click' },
+          name: { type: 'string', example: 'Keyboard Mechanical RGB Hot-Swappable' },
           category: { type: 'string', example: 'Elektronik' },
-          price: { type: 'number', example: 175000 },
-          image: { type: 'string', example: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80' },
+          price: { type: 'number', example: 650000 },
+          image: { type: 'string', example: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80' },
           variants: {
             type: 'object',
             required: ['colorOrSize', 'quantity'],
@@ -413,12 +435,12 @@ const swaggerSpec = {
               colorOrSize: {
                 type: 'array',
                 items: { type: 'string' },
-                example: ['Matte Black', 'Off White']
+                example: ['Red Switch', 'Blue Switch']
               },
-              quantity: { type: 'integer', example: 40 }
+              quantity: { type: 'integer', example: 20 }
             }
           },
-          description: { type: 'string', example: 'Mouse tanpa kabel ergonomis dengan tombol hening dan sensor 2400 DPI.' }
+          description: { type: 'string', example: 'Keyboard mechanical 75% dengan konektivitas Bluetooth 5.0 dan baterai 4000mAh.' }
         }
       },
       ErrorResponse: {
@@ -427,7 +449,7 @@ const swaggerSpec = {
           success: { type: 'boolean', example: false },
           statusCode: { type: 'integer', example: 400 },
           error: { type: 'string', example: 'Validation Error' },
-          message: { type: 'string', example: 'Field name wajib diisi.' },
+          message: { type: 'string', example: 'Data produk tidak memenuhi syarat validasi.' },
           details: {
             type: 'array',
             items: { type: 'string' }
@@ -439,4 +461,3 @@ const swaggerSpec = {
 };
 
 module.exports = swaggerSpec;
-
